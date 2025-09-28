@@ -5,6 +5,7 @@ using PortalInmobiliario.Data;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

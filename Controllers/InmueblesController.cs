@@ -1,7 +1,10 @@
+using System.Globalization;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using PortalInmobiliario.Data;
 using PortalInmobiliario.Models;
 using PortalInmobiliario.Models.ViewModels;
@@ -11,22 +14,66 @@ namespace PortalInmobiliario.Controllers
     public class InmueblesController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IDistributedCache _cache;
         private const int PageSize = 6;
 
-        public InmueblesController(ApplicationDbContext db) => _db = db;
-
-        // /Inmuebles/Catalogo
-        public async Task<IActionResult> Catalogo([FromQuery] CatalogoFiltroVM filtros, int page = 1)
+        public InmueblesController(ApplicationDbContext db, IDistributedCache cache)
         {
-            if (!TryValidateModel(filtros))
-                return View(new CatalogoVM { Filtros = filtros });
+            _db = db;
+            _cache = cache;
+        }
 
+        // ------- Claves de Sesión -------
+        private const string FiltrosKey = "CATALOGO:FILTROS";
+        private const string LastItemIdKey = "CATALOGO:LAST_ID";
+        private const string LastItemTitleKey = "CATALOGO:LAST_TIT";
+
+        private void SaveFiltersToSession(CatalogoFiltroVM f)
+            => HttpContext.Session.SetString(FiltrosKey, JsonSerializer.Serialize(f));
+
+        private CatalogoFiltroVM? ReadFiltersFromSession()
+        {
+            var s = HttpContext.Session.GetString(FiltrosKey);
+            return string.IsNullOrEmpty(s) ? null : JsonSerializer.Deserialize<CatalogoFiltroVM>(s);
+        }
+
+        private static string CacheKey(CatalogoFiltroVM f, int page)
+        {
+            string pm = f.PrecioMin?.ToString(CultureInfo.InvariantCulture) ?? "";
+            string pM = f.PrecioMax?.ToString(CultureInfo.InvariantCulture) ?? "";
+            string tipo = f.Tipo.HasValue ? ((int)f.Tipo.Value).ToString() : "";
+            string dorm = f.DormitoriosMin?.ToString() ?? "";
+            return $"catalog:{f.Ciudad}:{tipo}:{pm}:{pM}:{dorm}:p{page}";
+        }
+
+        // GET: /Inmuebles/Catalogo
+        public async Task<IActionResult> Catalogo([FromQuery(Name = "Filtros")] CatalogoFiltroVM filtros, int page = 1)
+        {
+            // 1) Limpiar filtros si viene clear=1
+            if (Request.Query.TryGetValue("clear", out var clear) && clear == "1")
+            {
+                HttpContext.Session.Remove(FiltrosKey);
+                filtros = new CatalogoFiltroVM();
+                ModelState.Clear();
+            }
+
+            // 2) Si no hay filtros en query y existe sesión previa, recupérala
+            bool filtrosVacios = string.IsNullOrWhiteSpace(filtros.Ciudad)
+                                 && !filtros.Tipo.HasValue && !filtros.PrecioMin.HasValue
+                                 && !filtros.PrecioMax.HasValue && !filtros.DormitoriosMin.HasValue;
+
+            if (filtrosVacios)
+            {
+                var last = ReadFiltersFromSession();
+                if (last is not null) filtros = last;
+            }
+
+            // Query base (aplica filtros)
             var q = _db.Inmuebles.AsNoTracking().Where(i => i.Activo);
-
             if (!string.IsNullOrWhiteSpace(filtros.Ciudad))
                 q = q.Where(i => i.Ciudad.Contains(filtros.Ciudad));
             if (filtros.Tipo.HasValue)
-                q = q.Where(i => i.Tipo == filtros.Tipo.Value);
+                q = q.Where(i => i.Tipo == filtros.Tipo);
             if (filtros.PrecioMin.HasValue)
                 q = q.Where(i => i.Precio >= filtros.PrecioMin.Value);
             if (filtros.PrecioMax.HasValue)
@@ -34,23 +81,66 @@ namespace PortalInmobiliario.Controllers
             if (filtros.DormitoriosMin.HasValue)
                 q = q.Where(i => i.Dormitorios >= filtros.DormitoriosMin.Value);
 
-            var total = await q.CountAsync();
-            var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)PageSize));
-            page = Math.Clamp(page, 1, totalPages);
+            // --- Caché 60s por filtros+page ---
+            var key = CacheKey(filtros, page);
+            CatalogoVM? vm = null;
 
-            var items = await q.OrderBy(i => i.Ciudad).ThenBy(i => (double)i.Precio)
-                               .Skip((page - 1) * PageSize)
-                               .Take(PageSize)
-                               .ToListAsync();
+            var cached = await _cache.GetStringAsync(key);
+            if (cached is not null)
+                vm = JsonSerializer.Deserialize<CatalogoVM>(cached);
 
-            return View(new CatalogoVM { Filtros = filtros, Items = items, Page = page, TotalPages = totalPages, TotalCount = total });
+            if (vm is null)
+            {
+                var total = await q.CountAsync();
+                var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)PageSize));
+                page = Math.Clamp(page, 1, totalPages);
+
+                var items = await q.OrderBy(i => i.Ciudad)
+                                   .ThenBy(i => (double)i.Precio) // SQLite: decimal -> double
+                                   .Skip((page - 1) * PageSize)
+                                   .Take(PageSize)
+                                   .Select(i => new Inmueble
+                                   {
+                                       Id = i.Id, Codigo = i.Codigo, Titulo = i.Titulo, Imagen = i.Imagen,
+                                       Tipo = i.Tipo, Ciudad = i.Ciudad, Direccion = i.Direccion,
+                                       Dormitorios = i.Dormitorios, Banos = i.Banos,
+                                       MetrosCuadrados = i.MetrosCuadrados, Precio = i.Precio, Activo = i.Activo
+                                   })
+                                   .ToListAsync();
+
+                vm = new CatalogoVM
+                {
+                    Filtros = filtros,
+                    Items = items,
+                    Page = page,
+                    TotalPages = totalPages,
+                    TotalCount = total
+                };
+
+                await _cache.SetStringAsync(
+                    key,
+                    JsonSerializer.Serialize(vm),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60)
+                    });
+            }
+
+            // Guarda filtros usados para próximas visitas
+            SaveFiltersToSession(filtros);
+            return View(vm);
         }
- // GET: /Inmuebles/Detalle/5
+
+        // GET: /Inmuebles/Detalle/5
         public async Task<IActionResult> Detalle(int id)
         {
             var item = await _db.Inmuebles.AsNoTracking()
                           .FirstOrDefaultAsync(i => i.Id == id && i.Activo);
             if (item is null) return NotFound();
+
+            // Guarda "último visitado" para el atajo del layout
+            HttpContext.Session.SetInt32(LastItemIdKey, id);
+            HttpContext.Session.SetString(LastItemTitleKey, item.Titulo);
 
             var now = DateTime.UtcNow;
             var puedeReservar = !await _db.Reservas.AsNoTracking()
@@ -77,11 +167,10 @@ namespace PortalInmobiliario.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AgendarVisita(VisitaCreateVM vm)
         {
-            // Validaciones de la VM (rango + horario)
             if (!ModelState.IsValid)
                 return await VolverADetalleConErrores(vm);
 
-            // Rechazar visitas solapadas (P3)
+            // no solapadas
             bool haySolape = await _db.Visitas.AsNoTracking()
                 .AnyAsync(v => v.InmuebleId == vm.InmuebleId &&
                                vm.FechaInicio < v.FechaFin &&
@@ -131,7 +220,7 @@ namespace PortalInmobiliario.Controllers
                 InmuebleId = id,
                 UsuarioId = userId,
                 FechaCreacion = now,
-                FechaExpiracion = now.AddHours(48) // P3: reserva 48h
+                FechaExpiracion = now.AddHours(48)
             };
 
             _db.Reservas.Add(reserva);
@@ -141,7 +230,7 @@ namespace PortalInmobiliario.Controllers
             return RedirectToAction(nameof(Detalle), new { id });
         }
 
-        // ------- helpers -------
+        // ------- helper -------
         private async Task<IActionResult> VolverADetalleConErrores(VisitaCreateVM vm)
         {
             var item = await _db.Inmuebles.AsNoTracking()
