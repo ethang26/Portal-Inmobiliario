@@ -1,0 +1,35 @@
+@model IEnumerable<PortalInmobiliario.Models.Inmueble>
+@{
+    ViewData["Title"] = "Inmuebles (Broker)";
+}
+<h3>Inmuebles</h3>
+<p>
+  <a class="btn btn-sm btn-primary" asp-action="CrearInmueble">Crear inmueble</a>
+</p>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Código</th><th>Título</th><th>Ciudad</th><th>Precio</th><th>Activo</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  @foreach (var i in Model)
+  {
+    <tr>
+      <td>@i.Codigo</td>
+      <td>@i.Titulo</td>
+      <td>@i.Ciudad</td>
+      <td>$ @i.Precio</td>
+      <td>@(i.Activo ? "Sí" : "No")</td>
+      <td class="text-nowrap">
+        <a class="btn btn-sm btn-outline-secondary" asp-action="EditarInmueble" asp-route-id="@i.Id">Editar</a>
+        <form asp-action="ToggleActivo" asp-route-id="@i.Id" method="post" class="d-inline">
+          <button class="btn btn-sm @(i.Activo?"btn-warning":"btn-success")">
+            @(i.Activo ? "Desactivar" : "Activar")
+          </button>
+        </form>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>
