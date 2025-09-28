@@ -1,0 +1,26 @@
+@model IEnumerable<PortalInmobiliario.Models.Reserva>
+@{
+    ViewData["Title"] = "Reservas activas";
+}
+<h3>Reservas activas</h3>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Inmueble</th><th>Expira</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  @foreach (var r in Model)
+  {
+    <tr>
+      <td>@r.Inmueble?.Titulo (@r.Inmueble?.Ciudad)</td>
+      <td>@r.FechaExpiracion.ToLocalTime()</td>
+      <td>
+        <form asp-action="LiberarReserva" asp-route-id="@r.Id" method="post">
+          <button class="btn btn-sm btn-warning">Liberar</button>
+        </form>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>

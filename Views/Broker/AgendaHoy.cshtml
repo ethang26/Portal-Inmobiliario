@@ -1,0 +1,31 @@
+@model IEnumerable<PortalInmobiliario.Models.Visita>
+@{
+    ViewData["Title"] = "Agenda de hoy";
+}
+<h3>Agenda de hoy</h3>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Hora</th><th>Inmueble</th><th>Estado</th><th>Notas</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  @foreach (var v in Model)
+  {
+    <tr>
+      <td>@v.FechaInicio.ToString("HH:mm") - @v.FechaFin.ToString("HH:mm")</td>
+      <td>@v.Inmueble?.Titulo (@v.Inmueble?.Ciudad)</td>
+      <td>@v.Estado</td>
+      <td>@v.Notas</td>
+      <td class="text-nowrap">
+        <form asp-action="ConfirmarVisita" asp-route-id="@v.Id" method="post" class="d-inline">
+          <button class="btn btn-sm btn-success">Confirmar</button>
+        </form>
+        <form asp-action="CancelarVisita" asp-route-id="@v.Id" method="post" class="d-inline">
+          <button class="btn btn-sm btn-danger">Cancelar</button>
+        </form>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>

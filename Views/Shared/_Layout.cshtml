@@ -29,6 +29,32 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Inmuebles" asp-action="Catalogo">Catálogo</a>
                         </li>
+                         @if (User.IsInRole("Broker"))
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-dark" href="#" id="brokerMenu" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+            Broker
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="brokerMenu">
+            <li>
+                <a class="dropdown-item" asp-controller="Broker" asp-action="Inmuebles">
+                    Inmuebles (CRUD)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-controller="Broker" asp-action="AgendaHoy">
+                    Agenda de hoy
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-controller="Broker" asp-action="ReservasActivas">
+                    Reservas activas
+                </a>
+            </li>
+        </ul>
+    </li>
+}
                          @using Microsoft.AspNetCore.Http
 @{
     var sid = Context.Session.GetInt32("CATALOGO:LAST_ID");
@@ -43,6 +69,7 @@
     </li>
 }
                     </ul>
+                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
