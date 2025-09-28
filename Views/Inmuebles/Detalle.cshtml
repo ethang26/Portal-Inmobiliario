@@ -1,0 +1,21 @@
+@model PortalInmobiliario.Models.Inmueble
+@{ ViewData["Title"] = "Detalle"; }
+
+<h2>@Model.Titulo</h2>
+<p class="text-muted">@Model.Ciudad · @Model.Direccion</p>
+
+<div class="row">
+  <div class="col-md-6">
+    <img class="img-fluid" src="@(string.IsNullOrEmpty(Model.Imagen) ? "https://via.placeholder.com/800x450" : Model.Imagen)" />
+  </div>
+  <div class="col-md-6">
+    <ul class="list-unstyled">
+      <li><strong>Tipo:</strong> @Model.Tipo</li>
+      <li><strong>Dormitorios:</strong> @Model.Dormitorios</li>
+      <li><strong>Baños:</strong> @Model.Banos</li>
+      <li><strong>Metros²:</strong> @Model.MetrosCuadrados</li>
+      <li><strong>Precio:</strong> $ @Model.Precio</li>
+    </ul>
+    <a class="btn btn-primary" href="#">Agendar visita</a> <!-- hook P3 -->
+  </div>
+</div>
