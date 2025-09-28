@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Usuario\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj": {}
+    "C:\\Users\\Usuario\\Desktop\\Inmobilaria\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Usuario\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj": {
+    "C:\\Users\\Usuario\\Desktop\\Inmobilaria\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Usuario\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj",
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\Inmobilaria\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj",
         "projectName": "Portal-Inmobiliario",
-        "projectPath": "C:\\Users\\Usuario\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\Inmobilaria\\Portal-Inmobiliario\\Portal-Inmobiliario.csproj",
         "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Usuario\\Portal-Inmobiliario\\obj\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\Inmobilaria\\Portal-Inmobiliario\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -22,15 +22,15 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net9.0"
+          "net8.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net9.0": {
-            "targetAlias": "net9.0",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -47,8 +47,40 @@
         "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.AspNetCore.Identity.UI": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.EntityFrameworkCore.Relational": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.EntityFrameworkCore.Sqlite": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.*, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
