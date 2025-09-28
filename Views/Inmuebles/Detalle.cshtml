@@ -1,21 +1,64 @@
-@model PortalInmobiliario.Models.Inmueble
-@{ ViewData["Title"] = "Detalle"; }
+@model PortalInmobiliario.Models.ViewModels.DetalleInmuebleVM
+@using PortalInmobiliario.Models
 
-<h2>@Model.Titulo</h2>
-<p class="text-muted">@Model.Ciudad · @Model.Direccion</p>
+<h2>@Model.Item.Titulo</h2>
+<p class="text-muted">@Model.Item.Ciudad · @Model.Item.Direccion</p>
+
+@if (TempData["Ok"] is string ok) { <div class="alert alert-success">@ok</div> }
+@if (TempData["Error"] is string err) { <div class="alert alert-danger">@err</div> }
 
 <div class="row">
   <div class="col-md-6">
-    <img class="img-fluid" src="@(string.IsNullOrEmpty(Model.Imagen) ? "https://via.placeholder.com/800x450" : Model.Imagen)" />
-  </div>
-  <div class="col-md-6">
-    <ul class="list-unstyled">
-      <li><strong>Tipo:</strong> @Model.Tipo</li>
-      <li><strong>Dormitorios:</strong> @Model.Dormitorios</li>
-      <li><strong>Baños:</strong> @Model.Banos</li>
-      <li><strong>Metros²:</strong> @Model.MetrosCuadrados</li>
-      <li><strong>Precio:</strong> $ @Model.Precio</li>
+    <img class="img-fluid"
+         src="@(string.IsNullOrEmpty(Model.Item.Imagen) ? "https://via.placeholder.com/800x450" : Model.Item.Imagen)" />
+    <ul class="list-unstyled mt-3">
+      <li><strong>Tipo:</strong> @Model.Item.Tipo</li>
+      <li><strong>Dormitorios:</strong> @Model.Item.Dormitorios</li>
+      <li><strong>Baños:</strong> @Model.Item.Banos</li>
+      <li><strong>Metros²:</strong> @Model.Item.MetrosCuadrados</li>
+      <li><strong>Precio:</strong> $ @Model.Item.Precio</li>
     </ul>
-    <a class="btn btn-primary" href="#">Agendar visita</a> <!-- hook P3 -->
+  </div>
+
+  <div class="col-md-6">
+    <h4>Agendar visita</h4>
+    <form asp-action="AgendarVisita" method="post">
+      @Html.AntiForgeryToken()
+      <input type="hidden" asp-for="NuevaVisita.InmuebleId" />
+      <div class="mb-2">
+        <label class="form-label">Inicio</label>
+        <input asp-for="NuevaVisita.FechaInicio" type="datetime-local" class="form-control" />
+        <span asp-validation-for="NuevaVisita.FechaInicio" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Fin</label>
+        <input asp-for="NuevaVisita.FechaFin" type="datetime-local" class="form-control" />
+        <span asp-validation-for="NuevaVisita.FechaFin" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Notas</label>
+        <textarea asp-for="NuevaVisita.Notas" class="form-control"></textarea>
+      </div>
+      <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+      <button class="btn btn-primary">Agendar</button>
+    </form>
+
+    <hr />
+
+    <h4>Reserva (48h)</h4>
+    @if (Model.PuedeReservar)
+    {
+      <form asp-action="Reservar" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Item.Id" />
+        <button class="btn btn-success">Reservar ahora</button>
+      </form>
+    }
+    else
+    {
+      <div class="alert alert-warning">Este inmueble ya tiene una reserva activa.</div>
+    }
   </div>
 </div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
