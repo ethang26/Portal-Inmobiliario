@@ -26,7 +26,7 @@ if (!app.Environment.IsDevelopment())
 // SEED al iniciar (top-level admite await)
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+      var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await Seed.RunAsync(db);
 }
 

@@ -1,0 +1,91 @@
+@model PortalInmobiliario.Models.ViewModels.CatalogoVM
+@using PortalInmobiliario.Models
+@{
+    ViewData["Title"] = "Catálogo";
+}
+
+<h2>Catálogo</h2>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <label class="form-label">Ciudad</label>
+    <input asp-for="Filtros.Ciudad" class="form-control" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Tipo</label>
+    <select asp-for="Filtros.Tipo" class="form-select"
+            asp-items="Html.GetEnumSelectList<TipoInmueble>()">
+      <option value="">(Todos)</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Precio Min</label>
+    <input asp-for="Filtros.PrecioMin" type="number" step="100000" class="form-control" />
+    <span asp-validation-for="Filtros.PrecioMin" class="text-danger"></span>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Precio Max</label>
+    <input asp-for="Filtros.PrecioMax" type="number" step="100000" class="form-control" />
+    <span asp-validation-for="Filtros.PrecioMax" class="text-danger"></span>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Dormitorios ≥</label>
+    <input asp-for="Filtros.DormitoriosMin" type="number" class="form-control" />
+    <span asp-validation-for="Filtros.DormitoriosMin" class="text-danger"></span>
+  </div>
+  <div class="col-12">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <button class="btn btn-primary">Filtrar</button>
+    <a asp-action="Catalogo" class="btn btn-outline-secondary">Limpiar</a>
+  </div>
+</form>
+
+<p class="text-muted">Resultados: @Model.TotalCount</p>
+
+<div class="row row-cols-1 row-cols-md-3 g-3">
+@foreach (var i in Model.Items)
+{
+  <div class="col">
+    <div class="card h-100">
+      <img class="card-img-top" src="@(string.IsNullOrEmpty(i.Imagen) ? "https://via.placeholder.com/600x300" : i.Imagen)" alt="@i.Titulo" />
+      <div class="card-body">
+        <h5 class="card-title">@i.Titulo</h5>
+        <p class="card-text">
+          <strong>@i.Ciudad</strong> · @i.Direccion<br />
+          @i.Dormitorios dorm · @i.Banos baño(s) · @i.MetrosCuadrados m²<br />
+          <strong>$ @i.Precio</strong>
+        </p>
+        <a asp-action="Detalle" asp-route-id="@i.Id" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+      </div>
+    </div>
+  </div>
+}
+</div>
+
+<nav class="mt-3">
+  <ul class="pagination">
+    <li class="page-item @(Model.Page==1?"disabled":"")">
+      <a class="page-link"
+         asp-action="Catalogo"
+         asp-route-page="@(Model.Page-1)"
+         asp-route-Ciudad="@Model.Filtros.Ciudad"
+         asp-route-Tipo="@Model.Filtros.Tipo"
+         asp-route-PrecioMin="@Model.Filtros.PrecioMin"
+         asp-route-PrecioMax="@Model.Filtros.PrecioMax"
+         asp-route-DormitoriosMin="@Model.Filtros.DormitoriosMin">Anterior</a>
+    </li>
+    <li class="page-item disabled"><span class="page-link">@Model.Page / @Model.TotalPages</span></li>
+    <li class="page-item @(Model.Page==Model.TotalPages?"disabled":"")">
+      <a class="page-link"
+         asp-action="Catalogo"
+         asp-route-page="@(Model.Page+1)"
+         asp-route-Ciudad="@Model.Filtros.Ciudad"
+         asp-route-Tipo="@Model.Filtros.Tipo"
+         asp-route-PrecioMin="@Model.Filtros.PrecioMin"
+         asp-route-PrecioMax="@Model.Filtros.PrecioMax"
+         asp-route-DormitoriosMin="@Model.Filtros.DormitoriosMin">Siguiente</a>
+    </li>
+  </ul>
+</nav>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
