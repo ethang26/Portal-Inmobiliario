@@ -29,6 +29,19 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Inmuebles" asp-action="Catalogo">Catálogo</a>
                         </li>
+                         @using Microsoft.AspNetCore.Http
+@{
+    var sid = Context.Session.GetInt32("CATALOGO:LAST_ID");
+    var stit = Context.Session.GetString("CATALOGO:LAST_TIT");
+}
+@if (sid.HasValue && !string.IsNullOrWhiteSpace(stit))
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-controller="Inmuebles" asp-action="Detalle" asp-route-id="@sid.Value">
+            Volver a @stit
+        </a>
+    </li>
+}
                     </ul>
                 </div>
             </div>
